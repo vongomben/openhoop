@@ -1,7 +1,7 @@
 //  https://www.sparkfun.com/datasheets/Components/General/MSGEQ7.pdf
 
-#define msg7RESET 11
-#define msg7Strobe 9
+#define msg7RESET 9
+#define msg7Strobe A0
 #define msg7DCout A5
 //const int LEDpins[7] = {3,5,5,6,9,9,10};    // there are 5 LEDs and 7 freq bands.  So, repeat LEDs
  
@@ -46,5 +46,5 @@ void loop() {
         //delay(1000);
     }
     Serial.println();
-    delay(100);
+    delay(10);
 }
