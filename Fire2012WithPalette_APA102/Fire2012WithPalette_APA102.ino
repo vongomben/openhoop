@@ -7,7 +7,7 @@
 #define DATA_PIN A1
 #define CLOCK_PIN A2
 
-#define BRIGHTNESS  50
+#define BRIGHTNESS  200
 #define FRAMES_PER_SECOND 120
 
 CRGB leds[NUM_LEDS];
@@ -59,7 +59,7 @@ void setup() {
   //   gPal = CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Aqua,  CRGB::White);
   
   // Third, here's a simpler, three-step gradient, from black to red to white
-     gPal = CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::White);
+  //   gPal = CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::White);
 
 }
 
@@ -73,11 +73,11 @@ void loop()
   // The palette is a gradient from black, to a dark color based on the hue,
   // to a light color based on the hue, to white.
   //
-  //   static uint8_t hue = 0;
-  //   hue++;
-  //   CRGB darkcolor  = CHSV(hue,255,192); // pure hue, three-quarters brightness
-  //   CRGB lightcolor = CHSV(hue,128,255); // half 'whitened', full brightness
-  //   gPal = CRGBPalette16( CRGB::Black, darkcolor, lightcolor, CRGB::White);
+     static uint8_t hue = 0;
+     hue++;
+     CRGB darkcolor  = CHSV(hue,255,192); // pure hue, three-quarters brightness
+     CRGB lightcolor = CHSV(hue,128,255); // half 'whitened', full brightness
+     gPal = CRGBPalette16( CRGB::Black, darkcolor, lightcolor, CRGB::White);
 
 
   Fire2012WithPalette(); // run simulation frame, using palette colors
