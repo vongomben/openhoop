@@ -2,12 +2,12 @@
 
 //#define LED_PIN     8
 #define COLOR_ORDER BGR
-#define CHIPSET     APA102 
-#define NUM_LEDS    178 // 192
-#define DATA_PIN  A1
+#define CHIPSET     APA102
+#define NUM_LEDS    10 //178
+#define DATA_PIN A1
 #define CLOCK_PIN A3
 
-#define BRIGHTNESS  200
+#define BRIGHTNESS  50
 #define FRAMES_PER_SECOND 120
 
 CRGB leds[NUM_LEDS];
@@ -41,16 +41,6 @@ CRGB leds[NUM_LEDS];
 
 CRGBPalette16 gPal;
 
-TBlendType    currentBlending;
-
-
-
-#define msg7RESET 9
-#define msg7Strobe A0
-#define msg7DCout A5 
-
-int msg7bands[7];
-
 void setup() {
   delay(3000); // sanity delay
   FastLED.addLeds<CHIPSET, DATA_PIN, CLOCK_PIN, COLOR_ORDER>(leds, NUM_LEDS);
@@ -66,7 +56,7 @@ void setup() {
   //   gPal = CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::Yellow, CRGB::White);
   
   // Second, this palette is like the heat colors, but blue/aqua instead of red/yellow
-  //   gPal = CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Aqua,  CRGB::White);
+     gPal = CRGBPalette16( CRGB::Black, CRGB::Blue, CRGB::Aqua,  CRGB::White);
   
   // Third, here's a simpler, three-step gradient, from black to red to white
   //   gPal = CRGBPalette16( CRGB::Black, CRGB::Red, CRGB::White);
@@ -83,15 +73,14 @@ void loop()
   // The palette is a gradient from black, to a dark color based on the hue,
   // to a light color based on the hue, to white.
   //
-     static uint8_t hue = 0;
-     hue++;
-     CRGB darkcolor  = CHSV(hue,255,192); // pure hue, three-quarters brightness
-     CRGB lightcolor = CHSV(hue,128,255); // half 'whitened', full brightness
-     gPal = CRGBPalette16( CRGB::Black, darkcolor, lightcolor, CRGB::White);
+  //   static uint8_t hue = 0;
+  //   hue++;
+  //   CRGB darkcolor  = CHSV(hue,255,192); // pure hue, three-quarters brightness
+  //   CRGB lightcolor = CHSV(hue,128,255); // half 'whitened', full brightness
+  //   gPal = CRGBPalette16( CRGB::Black, darkcolor, lightcolor, CRGB::White);
 
 
-  //Fire2012WithPalette(); // run simulation frame, using palette colors
-  audioLights();
+  Fire2012WithPalette(); // run simulation frame, using palette colors
   
   FastLED.show(); // display this frame
   FastLED.delay(1000 / FRAMES_PER_SECOND);
@@ -167,50 +156,3 @@ void Fire2012WithPalette()
     }
 }
 
-void FillLEDsFromPaletteColors( uint8_t colorIndex)
-{
-  uint8_t brightness = 255;
-  
-  for( int i = 0; i < NUM_LEDS; i++) {
-    leds[i] = ColorFromPalette( gPal, colorIndex, brightness, currentBlending);
-    colorIndex += 3;
-  }
-}
-
-void SetupAudioPalette()
-{
-  CRGB bandA = CHSV( msg7bands[1], 255, 255);
-  CRGB bandB  = CHSV( msg7bands[6], 255, 255);
-  CRGB bandC  = CHSV( msg7bands[7], 255, 255);
-  CRGB black  = CRGB::Black;
-  
-  
-  gPal = CRGBPalette16( 
-    bandA,  bandB,  bandC,  black,
-    bandA,  bandB,  bandC,  black,
-    bandA,  bandB,  bandC,  black,
-    bandA,  bandB,  bandC,  black );
-}
-
-void audioLights(){
-  readMSGEQ();
-  SetupAudioPalette(); 
-  currentBlending = BLEND;
-  FillLEDsFromPaletteColors(0);
-}
-
-
-void readMSGEQ() {
-  digitalWrite(msg7RESET, HIGH);          // reset the MSGEQ7's counter
-  delay(5);
-  digitalWrite(msg7RESET, LOW);
-
-  for (int x = 0; x < 7; x++) {
-    digitalWrite(msg7Strobe, LOW);      // output each DC value for each freq band
-    delayMicroseconds(35); // to allow the output to settle
-    int spectrumRead = analogRead(msg7DCout);
-    msg7bands[x] = map(spectrumRead, 0, 1024, 0, 254);
-    digitalWrite(msg7Strobe, HIGH);
-    delay(1);
-  }
-}
