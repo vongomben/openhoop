@@ -2,10 +2,10 @@
 
 //#define LED_PIN     8
 #define COLOR_ORDER BGR
-#define CHIPSET     APA102
-#define NUM_LEDS    192
-#define DATA_PIN A1
-#define CLOCK_PIN A2
+#define CHIPSET     APA102 
+#define NUM_LEDS    178 // 192
+#define DATA_PIN 8 //A1
+#define CLOCK_PIN 9 //A2
 
 #define BRIGHTNESS  200
 #define FRAMES_PER_SECOND 120
