@@ -24,6 +24,10 @@ CRGB leds[NUM_LEDS];
 #define BRIGHTNESS  200
 #define UPDATES_PER_SECOND 100
 
+#define qsubd(x, b)  ((x>b)?wavebright:0)                     // Digital unsigned subtraction macro. if result <0, then => 0. Otherwise, take on fixed value.
+#define qsuba(x, b)  ((x>b)?x-b:0)                            // Analog Unsigned subtraction macro. if result <0, then => 0
+
+
 // https://www.sparkfun.com/datasheets/Components/General/MSGEQ7.pdf
 // The seven band graphic equalizer IC is a CMOS chip that divides
 // the audio spectrum into seven bands.
@@ -91,7 +95,13 @@ void setup() {
 
 void loop()
 {
-  //readMSGEQ();
+  readMSGEQ();
+  
+  /*
+  for(int i= 0; i < NUM_LEDS; i++){
+    leds[i] = CHSV(msg7bands[i%7], 255, 255); 
+  }
+  */
   
   Wire.beginTransmission(MPU);
   Wire.write(0x3B);  // starting with register 0x3B (ACCEL_XOUT_H)
@@ -104,6 +114,7 @@ void loop()
   GyX = Wire.read() << 8 | Wire.read(); // 0x43 (GYRO_XOUT_H) & 0x44 (GYRO_XOUT_L)
   GyY = Wire.read() << 8 | Wire.read(); // 0x45 (GYRO_YOUT_H) & 0x46 (GYRO_YOUT_L)
   GyZ = Wire.read() << 8 | Wire.read(); // 0x47 (GYRO_ZOUT_H) & 0x48 (GYRO_ZOUT_L)
+  /*
   Serial.print("AcX = "); Serial.print(AcX);
   Serial.print(" | AcY = "); Serial.print(AcY);
   Serial.print(" | AcZ = "); Serial.print(AcZ);
@@ -111,26 +122,33 @@ void loop()
   Serial.print(" | GyX = "); Serial.print(GyX);
   Serial.print(" | GyY = "); Serial.print(GyY);
   Serial.print(" | GyZ = "); Serial.println(GyZ);
+  */
   delay(3);
   
  //ChangePalettePeriodically();
  int XXX = map(AcX, -16000, 16000, 0,255);
+ int YYY = map(AcY, -16000, 16000, 0,255);
+ int ZZZ = map(AcZ, -16000, 16000, 0,255);
  //ChangePalettePeriodically(XXX);
- purpleEdit(XXX);
+ //purpleEdit(XXX);
  //noChange(XXX);
  //Serial.print(" - ");
  //Serial.print(XXX);
  //Serial.println();
 
 //  Xcolor(AcX);
- 
+  //one_sine(XXX);
+  
+  //one_sine(msg7bands[4]);
+  audioEdit();
+  
   static uint8_t startIndex = 0;
-  startIndex = startIndex + 1; /* motion speed */
+  //startIndex = startIndex + 1; /* motion speed */
 
   FillLEDsFromPaletteColors(startIndex);
 
   FastLED.show();
-  FastLED.delay(1000 / UPDATES_PER_SECOND);
+  //FastLED.delay(1000 / UPDATES_PER_SECOND);
 }
 
 void FillLEDsFromPaletteColors( uint8_t colorIndex)
@@ -153,6 +171,38 @@ void noChange(int hue){
    currentBlending = NOBLEND;
    }
 }
+
+///START sine
+
+// Initialize changeable global variables. Play around with these!!!
+  uint8_t wavebright = 128;                                     // You can change the brightness of the waves/bars rolling across the screen.
+  uint8_t thishue = 0;                                          // You can change the starting hue value for the first wave.
+  uint8_t thisrot = 1;                                          // You can change how quickly the hue rotates for this wave. Currently 0.
+  uint8_t allsat = 255;                                         // I like 'em fully saturated with colour.
+  int8_t thisspeed = 8;                                         // You can change the speed of the wave, and use negative values.
+  uint8_t allfreq = 32;                                         // You can change the frequency, thus distance between bars.
+  int thisphase = 0;                                            // Phase change value gets calculated.
+  uint8_t thiscutoff = 192;                                     // You can change the cutoff value to display this wave. Lower value = longer wave.
+  int thisdelay = 30;                                           // You can change the delay. Also you can change the allspeed variable above. 
+  uint8_t bgclr = 0;                                            // A rotating background colour.
+  uint8_t bgbri = 16;                                           // Brightness of background colour
+
+void one_sine(uint8_t hue) {                                                             // This is the heart of this program. Sure is short.
+
+  thishue = hue;
+
+  thisphase += thisspeed;                                                     // You can change direction and speed individually.
+  thishue = thishue + thisrot;                                                // Hue rotation is fun for thiswave.
+  for (int k=0; k<NUM_LEDS-1; k++) {                                          // For each of the LED's in the strand, set a brightness based on a wave as follows:
+    int thisbright = qsubd(cubicwave8((k*allfreq)+thisphase), thiscutoff);    // qsub sets a minimum value called thiscutoff. If < thiscutoff, then bright = 0. Otherwise, bright = 128 (as defined in qsub)..
+    leds[k] = CHSV(bgclr, 255, bgbri);                                        // First set a background colour, but fully saturated.
+    leds[k] += CHSV(thishue, allsat, thisbright);                             // Then assign a hue to any that are bright enough.
+  }
+  bgclr++;                                                                    // You can change the background colour or remove this and leave it fixed.
+} // one_sine()
+
+
+//END sine 
 
 void purpleEdit(int hue){
   SetupPurpleAndGreenPalette(hue); 
@@ -264,6 +314,26 @@ const TProgmemPalette16 myRedWhiteBluePalette_p PROGMEM =
   CRGB::Black
 };
 
+// This function sets up a palette of purple and green stripes.
+void SetupAudioPalette()
+{
+  CRGB bandA = CHSV( msg7bands[3], 255, 255);
+  CRGB bandB  = CHSV( msg7bands[6], 255, 255);
+  CRGB bandC  = CHSV( msg7bands[7], 255, 255);
+  CRGB black  = CRGB::Black;
+  
+  
+  currentPalette = CRGBPalette16( 
+    bandA,  bandB,  bandC,  black,
+    bandA,  bandB,  bandC,  black,
+    bandA,  bandB,  bandC,  black,
+    bandA,  bandB,  bandC,  black );
+}
+void audioEdit(){
+  SetupAudioPalette(); 
+  currentBlending = BLEND;
+}
+
 
 
 // Additionl notes on FastLED compact palettes:
@@ -298,9 +368,14 @@ void readMSGEQ() {
     digitalWrite(msg7Strobe, LOW);      // output each DC value for each freq band
     delayMicroseconds(35); // to allow the output to settle
     int spectrumRead = analogRead(msg7DCout);
-    msg7bands[x] = spectrumRead;
+    msg7bands[x] = map(spectrumRead, 0, 1024, 0, 254);
+    Serial.print(x);
+     Serial.print(" ");
+     Serial.print(spectrumRead);
+     Serial.print(" ");
     digitalWrite(msg7Strobe, HIGH);
     delay(1);
   }
+  Serial.println();
 }
 
