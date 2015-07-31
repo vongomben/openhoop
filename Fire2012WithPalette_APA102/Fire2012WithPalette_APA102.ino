@@ -57,6 +57,8 @@ void setup() {
   //FastLED.addLeds<CHIPSET, LED_PIN, COLOR_ORDER>(leds, NUM_LEDS).setCorrection( TypicalLEDStrip );
   FastLED.setBrightness( BRIGHTNESS );
 
+  pinMode(msg7RESET, OUTPUT);
+  pinMode(msg7Strobe, OUTPUT);
   // This first palette is the basic 'black body radiation' colors,
   // which run from black to red to bright yellow to white.
   //gPal = HeatColors_p;
@@ -194,6 +196,11 @@ void SetupAudioPalette()
 
 void audioLights(){
   readMSGEQ();
+  for (int x = 0; x < 7; x++){
+    Serial.print(msg7bands[x]);
+    Serial.print(" ");
+  }
+  Serial.println("");
   SetupAudioPalette(); 
   currentBlending = BLEND;
   FillLEDsFromPaletteColors(0);
